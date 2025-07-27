@@ -3,9 +3,13 @@ const fetch = require("node-fetch");
 const { onRequest } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const serviceAccount = require("./config/serviceAccountKey.json");
-const { log } = require("firebase-functions/logger");
+const { google } = require('googleapis');
+const authorize = require('./auth');
 
 const app = express();
+const oAuth2Client = authorize();
+
+const calendar = google.calendar({ version: 'v3', auth: oAuth2Client });
 
 // Initialize Firebase Admin SDK
 admin.initializeApp({
@@ -61,6 +65,9 @@ app.post("/send-line-message", async (req, res) => {
       specialRequests,
       status: status, // สถานะเริ่มต้น
     });
+
+    console.log("📄 Booking data saved with ID:", docRef.id);
+
 
     // 2️⃣ ส่งข้อความไปยัง LINE
     const lineMessage = {
@@ -160,8 +167,8 @@ app.post("/send-line-message", async (req, res) => {
                   "type": "button",
                   "action": {
                     "type": "uri",
-                    "label": "ดูรายละเอียด",
-                    "uri": "https://www.youtube.com"
+                    "label": "ยกเลิกการจอง",
+                    "uri": `http://10.32.204.20:5001/booking-room-backend/us-central1/app/updateState/${docRef.id}?status=rejected`
                   },
                   "style": "primary"
                 }
@@ -262,17 +269,73 @@ app.get("/getStatusNumber", async (req, res) => {
   }
 });
 
-app.post("/updateState/:docId", async (req, res) => {
+app.get("/updateState/:docId", async (req, res) => {
   const docId = req.params.docId;
-  const { status } = req.body;
+  const status = req.query.status; // รับ query param: ?status=approved หรือ ?status=rejected
 
   try {
+    // อัปเดตสถานะ
     await db.collection("bookingData").doc(docId).update({ status });
-    res.status(200).json({ success: true });
+
+    if (status === "approved") {
+      // ดึงข้อมูลจาก Firestore
+      const doc = await db.collection("bookingData").doc(docId).get();
+      if (!doc.exists) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      const booking = doc.data();
+      // สร้าง Event ใน Google Calendar
+      const event = await createCalendarEventFromBooking(booking);
+      res.status(200).json({
+        success: true,
+        calendarEventLink: event.htmlLink,
+        calendarEventId: event.id,
+      });
+    }
+
+    else if (status === "rejected") {
+      console.log(`Booking with ID ${docId} has been rejected.`);
+      
+      res.redirect(`http://localhost:5173/success`);
+    }
+
   } catch (error) {
+    console.error('❌ Error:', error);
     res.status(500).json({ error: error.message });
   }
 });
+
+async function createCalendarEventFromBooking(booking) {
+  const event = {
+    summary: booking.activity,
+    description: booking.booker,
+    start: {
+      dateTime: `${booking.date}T${booking.startTime}:00`,
+      timeZone: 'Asia/Bangkok', // เปลี่ยนเป็นเวลาประเทศไทย
+    },
+    end: {
+      dateTime: `${booking.date}T${booking.endTime}:00`,
+      timeZone: 'Asia/Bangkok',
+    },
+  };
+
+  console.log('📅 Creating calendar event:', event);
+
+  return new Promise((resolve, reject) => {
+    calendar.events.insert(
+      {
+        calendarId: 'primary',
+        resource: event,
+      },
+      (err, event) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve(event.data);
+      }
+    );
+  });
+}
 
 exports.app = onRequest(
   { cors: true },
