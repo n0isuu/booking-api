@@ -1,0 +1,21 @@
+{
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ],
+  "emulators": {
+    "functions": {
+      "host": "0.0.0.0",
+      "port": 5001
+    }
+  }
+}
