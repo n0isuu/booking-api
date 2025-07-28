@@ -5,6 +5,7 @@ const admin = require("firebase-admin");
 const serviceAccount = require("./config/serviceAccountKey.json");
 const { google } = require('googleapis');
 const authorize = require('./auth');
+const { FieldValue } = require("firebase-admin/firestore");
 
 const app = express();
 const oAuth2Client = authorize();
@@ -64,6 +65,7 @@ app.post("/send-line-message", async (req, res) => {
       attendees,
       specialRequests,
       status: status, // สถานะเริ่มต้น
+      timestamp: FieldValue.serverTimestamp(),
     });
 
     console.log("📄 Booking data saved with ID:", docRef.id);
