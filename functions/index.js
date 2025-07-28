@@ -168,7 +168,7 @@ app.post("/send-line-message", async (req, res) => {
                   "action": {
                     "type": "uri",
                     "label": "ยกเลิกการจอง",
-                    "uri": `http://10.32.204.20:5001/booking-room-backend/us-central1/app/updateState/${docRef.id}?status=rejected`
+                    "uri": `https://us-central1-booking-room-backend.cloudfunctions.net/app/updateState/${docRef.id}?status=rejected`
                   },
                   "style": "primary"
                 }
@@ -271,37 +271,203 @@ app.get("/getStatusNumber", async (req, res) => {
 
 app.get("/updateState/:docId", async (req, res) => {
   const docId = req.params.docId;
-  const status = req.query.status; // รับ query param: ?status=approved หรือ ?status=rejected
+  const status = req.query.status;
 
   try {
-    // อัปเดตสถานะ
+    // อัปเดตสถานะใน Firestore
     await db.collection("bookingData").doc(docId).update({ status });
 
+    // ดึงข้อมูล booking
+    const doc = await db.collection("bookingData").doc(docId).get();
+    if (!doc.exists) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
+    const booking = doc.data();
+
+    const {
+      selectedRoom,
+      date,
+      startTime,
+      endTime,
+      booker,
+      phone,
+      activity,
+      bookingId,
+    } = booking;
+
+    console.log(booking);
+
+
+    // สร้าง Flex Message (แสดงรายละเอียดแบบภาพ)
+    const lineMessage = {
+      to: "U2698869fcd7379f81181c2fdc0b961eb", // ควรเก็บ userId ไว้ใน booking
+      messages: [
+        {
+          type: "flex",
+          altText: status === "approved"
+            ? "การจองห้องประชุมได้รับการอนุมัติแล้ว"
+            : "การจองห้องถูกปฏิเสธ",
+          contents: {
+            type: "bubble",
+            size: "kilo",
+            header: {
+              type: "box",
+              layout: "horizontal",
+              contents: [
+                {
+                  type: "text",
+                  text: status === "approved"
+                    ? "✅ การจองห้องประชุมได้รับการอนุมัติแล้ว"
+                    : "❌ การจองถูกปฏิเสธ",
+                  wrap: true,
+                  weight: "bold",
+                  color: status === "approved" ? "#1DB446" : "#FF3B30",
+                  size: "sm",
+                }
+              ],
+              paddingAll: "md",
+              backgroundColor: status === "approved" ? "#E6F5EA" : "#FDEBEC",
+            },
+            hero: selectedRoom?.picture
+              ? {
+                type: "image",
+                url: selectedRoom.picture,
+                size: "full",
+                aspectRatio: "16:9",
+                aspectMode: "cover",
+              }
+              : undefined,
+            body: {
+              type: "box",
+              layout: "vertical",
+              contents: [
+                {
+                  type: "text",
+                  text: `ห้อง${selectedRoom || "-"}`,
+                  weight: "bold",
+                  size: "xl",
+                  margin: "md",
+                },
+                {
+                  type: "box",
+                  layout: "vertical",
+                  margin: "lg",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      contents: [
+                        {
+                          type: "text",
+                          text: "วันที่:",
+                          size: "sm",
+                          weight: "bold",
+                          flex: 1,
+                        },
+                        {
+                          type: "text",
+                          text: `${date}`,
+                          size: "sm",
+                          flex: 3,
+                        },
+                      ],
+                    },
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      contents: [
+                        {
+                          type: "text",
+                          text: "เวลา:",
+                          size: "sm",
+                          weight: "bold",
+                          flex: 1,
+                        },
+                        {
+                          type: "text",
+                          text: `${startTime} - ${endTime}`,
+                          size: "sm",
+                          flex: 3,
+                        },
+                      ],
+                    },
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      contents: [
+                        {
+                          type: "text",
+                          text: "ผู้จอง:",
+                          size: "sm",
+                          weight: "bold",
+                          flex: 1,
+                        },
+                        {
+                          type: "text",
+                          text: `${booker} (${phone})`,
+                          size: "sm",
+                          flex: 3,
+                        },
+                      ],
+                    },
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      contents: [
+                        {
+                          type: "text",
+                          text: "กิจกรรม:",
+                          size: "sm",
+                          weight: "bold",
+                          flex: 1,
+                        },
+                        {
+                          type: "text",
+                          text: `${activity}`,
+                          size: "sm",
+                          flex: 3,
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      ]
+    };
+
+    // ส่ง LINE Flex
+    const response = await fetch("https://api.line.me/v2/bot/message/push", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${LINE_ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify(lineMessage),
+    });
+
+    // ถ้า approved ให้สร้าง calendar event ด้วย
     if (status === "approved") {
-      // ดึงข้อมูลจาก Firestore
-      const doc = await db.collection("bookingData").doc(docId).get();
-      if (!doc.exists) {
-        return res.status(404).json({ error: "Document not found" });
-      }
-      const booking = doc.data();
-      // สร้าง Event ใน Google Calendar
       const event = await createCalendarEventFromBooking(booking);
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         calendarEventLink: event.htmlLink,
         calendarEventId: event.id,
       });
-    }
-
-    else if (status === "rejected") {
-      console.log(`Booking with ID ${docId} has been rejected.`);
-      
-      res.redirect(`http://localhost:5173/success`);
+    } else {
+      return res.status(200).json({
+        success: true,
+        redirectUrl: "https://booking-room-15abd.web.app/success",
+      });
     }
 
   } catch (error) {
-    console.error('❌ Error:', error);
-    res.status(500).json({ error: error.message });
+    console.error("❌ Error:", error);
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -336,6 +502,22 @@ async function createCalendarEventFromBooking(booking) {
     );
   });
 }
+
+app.get("/checkUserId/:lineUserId", async (req, res) => {
+  const lineUserId = req.params.lineUserId;
+  try {
+    const user = await db.collection("users").doc(lineUserId).get();
+
+    if (!user.data() || user.data().role !== "admin") {
+      console.log(`User with ID ${lineUserId} not found.`);
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json("User found");
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 exports.app = onRequest(
   { cors: true },
