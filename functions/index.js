@@ -6,6 +6,7 @@ const serviceAccount = require("./config/serviceAccountKey.json");
 const { google } = require("googleapis");
 const authorize = require("./auth");
 const { FieldValue } = require("firebase-admin/firestore");
+const { text } = require("body-parser");
 
 const app = express();
 const oAuth2Client = authorize();
@@ -77,114 +78,6 @@ app.post("/send-line-message", async (req, res) => {
     console.log("📄 Booking data saved with ID:", docRef.id);
 
     // 2️⃣ ส่งข้อความไปยัง LINE
-    // const lineMessage = {
-    //   to: "U2698869fcd7379f81181c2fdc0b961eb",
-    //   messages: [
-    //     {
-    //       type: "flex",
-    //       altText: "การจองห้องประชุมสำเร็จ",
-    //       contents: {
-    //         type: "bubble",
-    //         header: {
-    //           type: "box",
-    //           layout: "vertical",
-    //           contents: [
-    //             {
-    //               type: "text",
-    //               text: "✅ จองห้องประชุมสำเร็จ",
-    //               weight: "bold",
-    //               size: "lg",
-    //               color: "#1DB446",
-    //             },
-    //           ],
-    //         },
-    //         hero: {
-    //           type: "image",
-    //           url: `${selectedRoom.picture}`,
-    //           size: "full",
-    //           aspectRatio: "16:9",
-    //           aspectMode: "cover",
-    //         },
-    //         body: {
-    //           type: "box",
-    //           layout: "vertical",
-    //           spacing: "md",
-    //           contents: [
-    //             {
-    //               type: "text",
-    //               text: `ห้อง: ${selectedRoom.name}`,
-    //               weight: "bold",
-    //               size: "md",
-    //             },
-    //             {
-    //               type: "box",
-    //               layout: "baseline",
-    //               contents: [
-    //                 {
-    //                   type: "text",
-    //                   text: "วันที่:",
-    //                   weight: "bold",
-    //                   size: "sm",
-    //                   flex: 1,
-    //                 },
-    //                 {
-    //                   type: "text",
-    //                   text: `${date}`,
-    //                   size: "sm",
-    //                   flex: 3,
-    //                 },
-    //               ],
-    //             },
-    //             {
-    //               type: "text",
-    //               text: `ผู้จอง: ${booker} (${phone})`,
-    //               size: "sm",
-    //               wrap: true,
-    //             },
-    //             {
-    //               type: "text",
-    //               text: `กิจกรรม: ${activity}`,
-    //               size: "sm",
-    //               wrap: true,
-    //             },
-    //             {
-    //               type: "text",
-    //               text: `จำนวนผู้เข้าร่วม: ${attendees}`,
-    //               size: "sm",
-    //             },
-    //             {
-    //               type: "text",
-    //               text: `คำขอพิเศษ: ${specialRequests}`,
-    //               size: "sm",
-    //               wrap: true,
-    //             },
-    //             {
-    //               type: "text",
-    //               text: `สถานะ: ${status}`,
-    //               size: "sm",
-    //               color: "#888888",
-    //             },
-    //           ],
-    //         },
-    //         footer: {
-    //           type: "box",
-    //           layout: "horizontal",
-    //           contents: [
-    //             {
-    //               type: "button",
-    //               action: {
-    //                 type: "uri",
-    //                 label: "ยกเลิกการจอง",
-    //                 uri: `https://us-central1-booking-room-backend.cloudfunctions.net/app/updateState/${docRef.id}?status=rejected`,
-    //               },
-    //               style: "primary",
-    //             },
-    //           ],
-    //         },
-    //       },
-    //     },
-    //   ],
-    // };
     const lineMessage = {
       to: "U2698869fcd7379f81181c2fdc0b961eb",
       messages: [
@@ -201,16 +94,9 @@ app.post("/send-line-message", async (req, res) => {
               contents: [
                 {
                   type: "text",
-                  text: "✅",
-                  size: "lg",
-                  flex: 0,
-                },
-                {
-                  type: "text",
-                  text: "จองห้องประชุมสำเร็จ",
-                  weight: "bold",
-                  size: "md",
-                  color: "#2E7D32",
+                  text: "✓ ส่งคำขอจองห้องประชุมสำเร็จ",
+                  size: "xxs",
+                  color: "#000000ff",
                   flex: 1,
                   margin: "sm",
                 },
@@ -233,7 +119,7 @@ app.post("/send-line-message", async (req, res) => {
                   type: "text",
                   text: `${selectedRoom.name}`,
                   weight: "bold",
-                  size: "xl",
+                  size: "lg",
                   color: "#333333",
                 },
                 {
@@ -247,8 +133,8 @@ app.post("/send-line-message", async (req, res) => {
                       contents: [
                         {
                           type: "text",
-                          text: "📅",
-                          size: "md",
+                          text: "🗓️",
+                          size: "sm",
                           flex: 0,
                         },
                         {
@@ -260,13 +146,13 @@ app.post("/send-line-message", async (req, res) => {
                             {
                               type: "text",
                               text: "วันที่",
-                              size: "sm",
+                              size: "xs",
                               color: "#888888",
                             },
                             {
                               type: "text",
                               text: `${date}`,
-                              size: "md",
+                              size: "sm",
                               weight: "bold",
                               color: "#333333",
                             },
@@ -280,8 +166,8 @@ app.post("/send-line-message", async (req, res) => {
                       contents: [
                         {
                           type: "text",
-                          text: "🕐",
-                          size: "md",
+                          text: "🕰️",
+                          size: "sm",
                           flex: 0,
                         },
                         {
@@ -293,13 +179,13 @@ app.post("/send-line-message", async (req, res) => {
                             {
                               type: "text",
                               text: "เวลา",
-                              size: "sm",
+                              size: "xs",
                               color: "#888888",
                             },
                             {
                               type: "text",
-                              text: "13:00 - 14:00 น.",
-                              size: "md",
+                              text: `${startTime} - ${endTime} น.`,
+                              size: "sm",
                               weight: "bold",
                               color: "#333333",
                             },
@@ -314,7 +200,7 @@ app.post("/send-line-message", async (req, res) => {
                         {
                           type: "text",
                           text: "👤",
-                          size: "md",
+                          size: "sm",
                           flex: 0,
                         },
                         {
@@ -326,13 +212,13 @@ app.post("/send-line-message", async (req, res) => {
                             {
                               type: "text",
                               text: "ผู้จอง",
-                              size: "sm",
+                              size: "xs",
                               color: "#888888",
                             },
                             {
                               type: "text",
                               text: `${booker}`,
-                              size: "md",
+                              size: "sm",
                               weight: "bold",
                               color: "#333333",
                             },
@@ -346,8 +232,8 @@ app.post("/send-line-message", async (req, res) => {
                       contents: [
                         {
                           type: "text",
-                          text: "💬",
-                          size: "md",
+                          text: "📋",
+                          size: "sm",
                           flex: 0,
                         },
                         {
@@ -359,13 +245,13 @@ app.post("/send-line-message", async (req, res) => {
                             {
                               type: "text",
                               text: "กิจกรรม/หัวข้อการประชุม",
-                              size: "sm",
+                              size: "xs",
                               color: "#888888",
                             },
                             {
                               type: "text",
                               text: `${activity}`,
-                              size: "md",
+                              size: "sm",
                               weight: "bold",
                               color: "#333333",
                               wrap: true,
@@ -432,7 +318,22 @@ app.post("/send-line-message", async (req, res) => {
                                   contents: [
                                     {
                                       type: "text",
-                                      text: "25 ก.ค. 2568 11:37 น.",
+                                      text: `${new Date().toLocaleDateString(
+                                        "th-TH",
+                                        {
+                                          day: "2-digit",
+                                          month: "short",
+                                          year: "numeric",
+                                          timeZone: "Asia/Bangkok",
+                                        }
+                                      )} ${new Date().toLocaleTimeString(
+                                        "th-TH",
+                                        {
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                          timeZone: "Asia/Bangkok",
+                                        }
+                                      )}`,
                                       size: "xs",
                                       color: "#888888",
                                     },
@@ -745,311 +646,7 @@ app.get("/updateState/:docId", async (req, res) => {
 
     console.log(booking);
 
-    // สร้าง Flex Message (แสดงรายละเอียดแบบภาพ)
-    // const lineMessage = {
-    //   to: "U2698869fcd7379f81181c2fdc0b961eb", // ควรเก็บ userId ไว้ใน booking
-    //   messages: [
-    //     {
-    //       type: "flex",
-    //       altText:
-    //         status === "approved"
-    //           ? "การจองห้องประชุมได้รับการอนุมัติแล้ว"
-    //           : "การจองห้องถูกปฏิเสธ",
-    //       contents: {
-    //         type: "bubble",
-    //         size: "kilo",
-    //         header: {
-    //           type: "box",
-    //           layout: "horizontal",
-    //           contents: [
-    //             {
-    //               type: "text",
-    //               text:
-    //                 status === "approved"
-    //                   ? "✅ การจองห้องประชุมได้รับการอนุมัติแล้ว"
-    //                   : "❌ การจองถูกปฏิเสธ",
-    //               wrap: true,
-    //               weight: "bold",
-    //               color: status === "approved" ? "#1DB446" : "#FF3B30",
-    //               size: "sm",
-    //             },
-    //           ],
-    //           paddingAll: "md",
-    //           backgroundColor: status === "approved" ? "#E6F5EA" : "#FDEBEC",
-    //         },
-    //         hero: selectedRoom?.picture
-    //           ? {
-    //               type: "image",
-    //               url: selectedRoom.picture,
-    //               size: "full",
-    //               aspectRatio: "16:9",
-    //               aspectMode: "cover",
-    //             }
-    //           : undefined,
-    //         body: {
-    //           type: "box",
-    //           layout: "vertical",
-    //           contents: [
-    //             {
-    //               type: "text",
-    //               text: `ห้อง${selectedRoom || "-"}`,
-    //               weight: "bold",
-    //               size: "xl",
-    //               margin: "md",
-    //             },
-    //             {
-    //               type: "box",
-    //               layout: "vertical",
-    //               margin: "lg",
-    //               spacing: "sm",
-    //               contents: [
-    //                 {
-    //                   type: "box",
-    //                   layout: "baseline",
-    //                   contents: [
-    //                     {
-    //                       type: "text",
-    //                       text: "วันที่:",
-    //                       size: "sm",
-    //                       weight: "bold",
-    //                       flex: 1,
-    //                     },
-    //                     {
-    //                       type: "text",
-    //                       text: `${date}`,
-    //                       size: "sm",
-    //                       flex: 3,
-    //                     },
-    //                   ],
-    //                 },
-    //                 {
-    //                   type: "box",
-    //                   layout: "baseline",
-    //                   contents: [
-    //                     {
-    //                       type: "text",
-    //                       text: "เวลา:",
-    //                       size: "sm",
-    //                       weight: "bold",
-    //                       flex: 1,
-    //                     },
-    //                     {
-    //                       type: "text",
-    //                       text: `${startTime} - ${endTime}`,
-    //                       size: "sm",
-    //                       flex: 3,
-    //                     },
-    //                   ],
-    //                 },
-    //                 {
-    //                   type: "box",
-    //                   layout: "baseline",
-    //                   contents: [
-    //                     {
-    //                       type: "text",
-    //                       text: "ผู้จอง:",
-    //                       size: "sm",
-    //                       weight: "bold",
-    //                       flex: 1,
-    //                     },
-    //                     {
-    //                       type: "text",
-    //                       text: `${booker} (${phone})`,
-    //                       size: "sm",
-    //                       flex: 3,
-    //                     },
-    //                   ],
-    //                 },
-    //                 {
-    //                   type: "box",
-    //                   layout: "baseline",
-    //                   contents: [
-    //                     {
-    //                       type: "text",
-    //                       text: "กิจกรรม:",
-    //                       size: "sm",
-    //                       weight: "bold",
-    //                       flex: 1,
-    //                     },
-    //                     {
-    //                       type: "text",
-    //                       text: `${activity}`,
-    //                       size: "sm",
-    //                       flex: 3,
-    //                     },
-    //                   ],
-    //                 },
-    //               ],
-    //             },
-    //           ],
-    //         },
-    //       },
-    //     },
-    //   ],
-    // };
-
-    // const lineMessage = {
-    //   to: "U2698869fcd7379f81181c2fdc0b961eb", // ควรเก็บ userId ไว้ใน booking
-    //   messages: [
-    //     {
-    //       type: "flex",
-    //       altText:
-    //         status === "approved"
-    //           ? "การจองห้องประชุมได้รับการอนุมัติแล้ว"
-    //           : "การจองห้องไม่ได้รับการอนุมัติ",
-    //       contents: {
-    //         type: "bubble",
-    //         size: "kilo",
-    //         header: {
-    //           type: "box",
-    //           layout: "horizontal",
-    //           contents: [
-    //             {
-    //               type: "text",
-    //               text:
-    //                 status === "approved"
-    //                   ? "✓ การจองได้รับการอนุมัติแล้ว"
-    //                   : "✘ การจองห้องไม่ได้รับการอนุมัติ",
-    //               wrap: true,
-    //               weight: "bold",
-    //               color: status === "approved" ? "#1DB446" : "#FF3B30",
-    //               size: "sm",
-    //             },
-    //           ],
-    //           paddingAll: "md",
-    //           backgroundColor: status === "approved" ? "#E6F5EA" : "#FDEBEC",
-    //         },
-    //         hero: selectedRoom?.picture
-    //           ? {
-    //               type: "image",
-    //               url: selectedRoom.picture,
-    //               size: "full",
-    //               aspectRatio: "16:9",
-    //               aspectMode: "cover",
-    //             }
-    //           : undefined,
-    //         body: {
-    //           type: "box",
-    //           layout: "vertical",
-    //           contents: [
-    //             {
-    //               type: "text",
-    //               text: `ห้อง ${selectedRoom || "-"}`,
-    //               weight: "bold",
-    //               size: "xl",
-    //               margin: "md",
-    //             },
-    //             {
-    //               type: "box",
-    //               layout: "vertical",
-    //               margin: "lg",
-    //               spacing: "sm",
-    //               contents: [
-    //                 {
-    //                   type: "box",
-    //                   layout: "baseline",
-    //                   contents: [
-    //                     {
-    //                       type: "text",
-    //                       text: "วันที่: ",
-    //                       size: "sm",
-    //                       weight: "bold",
-    //                       flex: 1,
-    //                     },
-    //                     {
-    //                       type: "text",
-    //                       text: `${date}`,
-    //                       size: "sm",
-    //                       flex: 3,
-    //                     },
-    //                   ],
-    //                 },
-    //                 {
-    //                   type: "box",
-    //                   layout: "baseline",
-    //                   contents: [
-    //                     {
-    //                       type: "text",
-    //                       text: "เวลา: ",
-    //                       size: "sm",
-    //                       weight: "bold",
-    //                       flex: 1,
-    //                     },
-    //                     {
-    //                       type: "text",
-    //                       text: `${startTime} - ${endTime} น.`,
-    //                       size: "sm",
-    //                       flex: 3,
-    //                     },
-    //                   ],
-    //                 },
-    //                 {
-    //                   type: "box",
-    //                   layout: "baseline",
-    //                   contents: [
-    //                     {
-    //                       type: "text",
-    //                       text: "ผู้จอง:",
-    //                       size: "sm",
-    //                       weight: "bold",
-    //                       flex: 1,
-    //                     },
-    //                     {
-    //                       type: "text",
-    //                       text: `${booker} (${phone})`,
-    //                       size: "sm",
-    //                       flex: 3,
-    //                     },
-    //                   ],
-    //                 },
-    //                 {
-    //                   type: "box",
-    //                   layout: "baseline",
-    //                   contents: [
-    //                     {
-    //                       type: "text",
-    //                       text: "กิจกรรม:",
-    //                       size: "sm",
-    //                       weight: "bold",
-    //                       flex: 1,
-    //                     },
-    //                     {
-    //                       type: "text",
-    //                       text: `${activity}`,
-    //                       size: "sm",
-    //                       flex: 3,
-    //                     },
-    //                   ],
-    //                 },
-    //               ],
-    //             },
-    //           ],
-    //         },
-    //         footer: {
-    //           type: "box",
-    //           layout: "vertical",
-    //           contents: [
-    //             {
-    //               type: "text",
-    //               text:
-    //                 status === "approved"
-    //                   ? "การจองได้รับการอนุมัติแล้ว"
-    //                   : "การจองห้องไม่ได้รับการอนุมัติ กรุณาติดต่อเจ้าหน้าที่",
-    //               size: "sm",
-    //               color: status === "approved" ? "#1DB446" : "#FF3B30",
-    //               weight: "bold",
-    //               wrap: true,
-    //               align: "center",
-    //             },
-    //           ],
-    //           paddingAll: "md",
-    //           backgroundColor: status === "approved" ? "#E6F5EA" : "#FDEBEC",
-    //           spacing: "sm",
-    //         },
-    //       },
-    //     },
-    //   ],
-    // };
+    // สร้าง Flex Message (อนุมัติและปฏิเสธ)
     const lineMessage = {
       to: "U2698869fcd7379f81181c2fdc0b961eb", // ควรเก็บ userId ไว้ใน booking
       messages: [
@@ -1057,8 +654,8 @@ app.get("/updateState/:docId", async (req, res) => {
           type: "flex",
           altText:
             status === "approved"
-              ? "การจองห้องประชุมได้รับการอนุมัติแล้ว"
-              : "การจองห้องไม่ได้รับการอนุมัติ",
+              ? "✓ การจองห้องประชุมได้รับการอนุมัติแล้ว"
+              : "✘ การจองห้องถูกปฏิเสธ/ยกเลิกการจอง",
           contents: {
             type: "bubble",
             size: "kilo",
@@ -1070,21 +667,20 @@ app.get("/updateState/:docId", async (req, res) => {
                   type: "text",
                   text:
                     status === "approved"
-                      ? "การจองห้องประชุมได้รับการอนุมัติแล้ว"
-                      : "การจองห้องไม่ได้รับการอนุมัติ",
+                      ? "✓ การจองห้องประชุมได้รับการอนุมัติแล้ว"
+                      : "✘ การจองห้องถูกปฏิเสธ/ยกเลิกการจอง",
                   wrap: true,
-                  weight: "bold",
-                  color: "#FFFFFF",
-                  size: "sm",
+                  color: "#000000ff",
+                  size: "xs",
                 },
               ],
               paddingAll: "md",
-              backgroundColor: status === "approved" ? "#4CAF50" : "#F44336",
+              backgroundColor: status === "approved" ? "#E8F5E8" : "#ffd6d6ff",
             },
             hero: selectedRoom?.picture
               ? {
                   type: "image",
-                  url: selectedRoom.picture,
+                  url: `${selectedRoom.picture}`,
                   size: "full",
                   aspectRatio: "16:9",
                   aspectMode: "cover",
@@ -1096,9 +692,9 @@ app.get("/updateState/:docId", async (req, res) => {
               contents: [
                 {
                   type: "text",
-                  text: `ห้องประชุมใหญ่ ${selectedRoom || "812"}`,
+                  text: `${selectedRoom}`,
                   weight: "bold",
-                  size: "xl",
+                  size: "md",
                   margin: "md",
                 },
                 {
@@ -1113,7 +709,7 @@ app.get("/updateState/:docId", async (req, res) => {
                       contents: [
                         {
                           type: "text",
-                          text: "📅",
+                          text: "🗓️",
                           size: "sm",
                           flex: 0,
                         },
@@ -1129,8 +725,9 @@ app.get("/updateState/:docId", async (req, res) => {
                     },
                     {
                       type: "text",
-                      text: `${date || "27 กรกฎาคม 2568"}`,
-                      size: "sm",
+                      text: `${formatThaiDate(date)}`,
+                      size: "md",
+                      weight: "bold",
                       margin: "sm",
                     },
                     {
@@ -1139,7 +736,7 @@ app.get("/updateState/:docId", async (req, res) => {
                       contents: [
                         {
                           type: "text",
-                          text: "⏰",
+                          text: "🕰️",
                           size: "sm",
                           flex: 0,
                         },
@@ -1155,10 +752,9 @@ app.get("/updateState/:docId", async (req, res) => {
                     },
                     {
                       type: "text",
-                      text: `${startTime || "13:00"} - ${
-                        endTime || "14:00"
-                      } น.`,
-                      size: "sm",
+                      text: `${startTime} - ${endTime} น.`,
+                      size: "md",
+                      weight: "bold",
                       margin: "sm",
                     },
                     {
@@ -1183,8 +779,9 @@ app.get("/updateState/:docId", async (req, res) => {
                     },
                     {
                       type: "text",
-                      text: `${booker || "คุณสมชาย ใจดี"}`,
-                      size: "sm",
+                      text: `${booker}`,
+                      size: "md",
+                      weight: "bold",
                       margin: "sm",
                     },
                     {
@@ -1193,7 +790,7 @@ app.get("/updateState/:docId", async (req, res) => {
                       contents: [
                         {
                           type: "text",
-                          text: "💬",
+                          text: "📋",
                           size: "sm",
                           flex: 0,
                         },
@@ -1209,8 +806,9 @@ app.get("/updateState/:docId", async (req, res) => {
                     },
                     {
                       type: "text",
-                      text: `${activity || "ประชุมวางแผนโครงการ"}`,
-                      size: "sm",
+                      text: `${activity}`,
+                      size: "md",
+                      weight: "bold",
                       margin: "sm",
                     },
                     {
@@ -1221,7 +819,7 @@ app.get("/updateState/:docId", async (req, res) => {
                       type: "text",
                       text: "สถานะการจอง",
                       weight: "bold",
-                      size: "sm",
+                      size: "md",
                       margin: "xl",
                     },
                     {
@@ -1264,9 +862,11 @@ app.get("/updateState/:docId", async (req, res) => {
                                 day: "numeric",
                                 month: "short",
                                 year: "numeric",
+                                timeZone: "Asia/Bangkok",
                               })} ${new Date().toLocaleTimeString("th-TH", {
                                 hour: "2-digit",
                                 minute: "2-digit",
+                                timeZone: "Asia/Bangkok",
                               })} น.`,
                               size: "xs",
                               color: "#666666",
@@ -1276,7 +876,7 @@ app.get("/updateState/:docId", async (req, res) => {
                               text:
                                 status === "approved"
                                   ? "การจองได้รับการอนุมัติแล้ว"
-                                  : "การจองห้องไม่ได้รับการอนุมัติ กรุณาติดต่อเจ้าหน้าที่",
+                                  : "การจองห้องถูกปฏิเสธ/ยกเลิกการจอง",
                               size: "sm",
                               wrap: true,
                               color:
@@ -1297,6 +897,30 @@ app.get("/updateState/:docId", async (req, res) => {
         },
       ],
     };
+
+    function formatThaiDate(dateStr) {
+      const months = [
+        "ม.ค.",
+        "ก.พ.",
+        "มี.ค.",
+        "เม.ย.",
+        "พ.ค.",
+        "มิ.ย.",
+        "ก.ค.",
+        "ส.ค.",
+        "ก.ย.",
+        "ต.ค.",
+        "พ.ย.",
+        "ธ.ค.",
+      ];
+
+      const [year, month, day] = dateStr.split("-");
+      const buddhistYear = parseInt(year, 10) + 543;
+
+      return `${parseInt(day, 10)} ${
+        months[parseInt(month, 10) - 1]
+      } ${buddhistYear}`;
+    }
 
     // ส่ง LINE Flex
     const response = await fetch("https://api.line.me/v2/bot/message/push", {
