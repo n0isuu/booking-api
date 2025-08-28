@@ -955,7 +955,7 @@ app.get("/updateState/:docId", async (req, res) => {
 async function createCalendarEventFromBooking(booking) {
   const event = {
     summary: booking.activity,
-    description: booking.booker,
+    description: "ผู้จอง: " + (booking.booker || '-') + "\nTel: " + (booking.phone || '-'),
     start: {
       dateTime: `${booking.date}T${booking.startTime}:00`,
       timeZone: "Asia/Bangkok", // เปลี่ยนเป็นเวลาประเทศไทย
