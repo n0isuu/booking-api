@@ -2615,4 +2615,24 @@ app.get("/checkUserId/:lineUserId", async (req, res) => {
   }
 });
 
+app.get('/getUserData/:userId', async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const userDoc = await db.collection('users').doc(userId).get();
+
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userData = userDoc.data();
+    return res.status(200).json(userData);
+
+  } catch (error) {
+    console.error('Error getting user data:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
 exports.app = onRequest({ cors: true }, app);
