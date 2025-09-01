@@ -456,24 +456,24 @@ function createUserConfirmMessage(selectedRoom, bookingData, docId) {
           },
         ],
       },
-      footer: {
-        type: "box",
-        layout: "horizontal",
-        spacing: "sm",
-        paddingAll: "lg",
-        contents: [
-          {
-            type: "button",
-            action: {
-              type: "uri",
-              label: "ยกเลิกการจอง",
-              uri: `https://us-central1-booking-room-backend.cloudfunctions.net/app/cancelBooking/${docId}`,
-            },
-            style: "secondary",
-            color: "#666666",
-          },
-        ],
-      },
+      // footer: {
+      //   type: "box",
+      //   layout: "horizontal",
+      //   spacing: "sm",
+      //   paddingAll: "lg",
+      //   contents: [
+      //     {
+      //       type: "button",
+      //       action: {
+      //         type: "uri",
+      //         label: "ยกเลิกการจอง",
+      //         uri: `https://us-central1-booking-room-backend.cloudfunctions.net/app/cancelBooking/${docId}`,
+      //       },
+      //       style: "secondary",
+      //       color: "#666666",
+      //     },
+      //   ],
+      // },
     },
   };
 }
